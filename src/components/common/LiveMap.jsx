@@ -4,7 +4,6 @@ import { CloudRain, Search, Wrench, Star, Phone, Clock, ChevronDown, ChevronUp, 
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { apiService } from '../../services/apiService';
-import { API_URL, WS_URL } from '../../config/apiConfig';
 
 // ── Star Rating Component ─────────────────────────────────────────────────────
 function StarRating({ value, onChange, size = 14, readonly = false }) {
@@ -110,6 +109,45 @@ const getClientDistance = (lat1, lon1, lat2, lon2) => {
   return R * c; // meters
 };
 
+const getRemainingRouteDetails = (userLoc, route) => {
+  if (!userLoc || !route || !route.geometry || !route.geometry.coordinates) {
+    return null;
+  }
+  
+  const coords = route.geometry.coordinates;
+  let closestIdx = 0;
+  let minDistance = Infinity;
+  
+  for (let i = 0; i < coords.length; i++) {
+    const dist = getClientDistance(userLoc.lat, userLoc.lng, coords[i][1], coords[i][0]);
+    if (dist < minDistance) {
+      minDistance = dist;
+      closestIdx = i;
+    }
+  }
+  
+  const remainingCoords = [[userLoc.lng, userLoc.lat], ...coords.slice(closestIdx)];
+  
+  let remainingDistMeters = 0;
+  for (let i = 0; i < remainingCoords.length - 1; i++) {
+    remainingDistMeters += getClientDistance(
+      remainingCoords[i][1], remainingCoords[i][0],
+      remainingCoords[i+1][1], remainingCoords[i+1][0]
+    );
+  }
+  
+  const totalDistance = route.distance || 1;
+  const ratio = Math.min(1, remainingDistMeters / totalDistance);
+  const remainingDuration = Math.round(route.weighted_duration * ratio);
+  
+  return {
+    coordinates: remainingCoords,
+    distance: remainingDistMeters,
+    duration: remainingDuration,
+    deviationDistance: minDistance
+  };
+};
+
 const getWaterLevelBadge = (level, status, systemConfig, calib_empty_cm) => {
   if (status === 'offline' || status === 'error') {
     return { label: "Lost connection", className: 'badge-gray', color: 'var(--text-muted)', mapColor: '#475569', badgeBg: 'rgba(71,85,105,0.1)' };
@@ -202,6 +240,18 @@ export default function LiveMap({ activeMissions = [], height = 480, hideWrapper
 
   const [isNavigatingActive, setIsNavigatingActive] = useState(false);
   const watchIdRef = useRef(null);
+
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [mapCenter, setMapCenter] = useState(null);
+  const [searchedLocation, setSearchedLocation] = useState(null);
+  const [userLocation, setUserLocation] = useState(null);
+  const [isLocating, setIsLocating] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isLocalDropdownExpanded, setIsLocalDropdownExpanded] = useState(true);
+  const [toast, setToast] = useState(null);
+  const searchContainerRef = useRef(null);
+  const wrapperRef = useRef(null);
 
   const startActiveJourney = () => {
     if (!navigator.geolocation) {
@@ -346,6 +396,37 @@ export default function LiveMap({ activeMissions = [], height = 480, hideWrapper
     }
   }, [routingStart, routingEnd, isRoutingMode]);
 
+  const lastRecalculateTimeRef = useRef(0);
+
+  useEffect(() => {
+    if (!isNavigatingActive || !userLocation || !routingEnd || routeAlternatives.length === 0) {
+      return;
+    }
+    
+    const activeRoute = routeAlternatives[selectedRouteIdx];
+    const details = getRemainingRouteDetails(userLocation, activeRoute);
+    if (!details) return;
+    
+    const deviationThreshold = 50; // meters
+    const now = Date.now();
+    const cooldownPeriod = 15000; // 15 seconds cooldown
+    
+    if (details.deviationDistance > deviationThreshold && (now - lastRecalculateTimeRef.current > cooldownPeriod)) {
+      console.log(`User off-route by ${details.deviationDistance.toFixed(1)}m. Recalculating...`);
+      lastRecalculateTimeRef.current = now;
+      
+      setToast({ type: 'error', message: 'Lệch tuyến đường! Đang tính toán lại đường đi mới...' });
+      setTimeout(() => setToast(null), 5000);
+      
+      const freshStart = {
+        lat: userLocation.lat,
+        lng: userLocation.lng,
+        name: "My Location (Recalculating)"
+      };
+      setRoutingStart(freshStart);
+    }
+  }, [userLocation, isNavigatingActive, selectedRouteIdx, routeAlternatives, routingEnd]);
+
   useEffect(() => {
     const fetchConfig = async () => {
       try {
@@ -359,17 +440,7 @@ export default function LiveMap({ activeMissions = [], height = 480, hideWrapper
     };
     fetchConfig();
   }, []);
-  const [isSearching, setIsSearching] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [mapCenter, setMapCenter] = useState(null);
-  const [searchedLocation, setSearchedLocation] = useState(null);
-  const [userLocation, setUserLocation] = useState(null);
-  const [isLocating, setIsLocating] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isLocalDropdownExpanded, setIsLocalDropdownExpanded] = useState(true);
-  const [toast, setToast] = useState(null);
-  const searchContainerRef = useRef(null);
-  const wrapperRef = useRef(null);
+
 
   useEffect(() => {
     const onFullscreenChange = () => {
@@ -614,7 +685,8 @@ export default function LiveMap({ activeMissions = [], height = 480, hideWrapper
     // Set up WebSocket for real-time telemetry
     let ws = null;
     const connectWebSocket = () => {
-      const wsUrl = WS_URL;
+      const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const wsUrl = backendUrl.replace('http', 'ws').replace('/api', '');
       
       ws = new WebSocket(wsUrl);
       
@@ -1005,8 +1077,14 @@ export default function LiveMap({ activeMissions = [], height = 480, hideWrapper
               let HUDDistance = 0;
               let HUDDuration = 0;
               if (routeAlternatives[selectedRouteIdx]) {
-                HUDDistance = routeAlternatives[selectedRouteIdx].distance;
-                HUDDuration = routeAlternatives[selectedRouteIdx].weighted_duration;
+                const details = getRemainingRouteDetails(userLocation, routeAlternatives[selectedRouteIdx]);
+                if (details) {
+                  HUDDistance = details.distance;
+                  HUDDuration = details.duration;
+                } else {
+                  HUDDistance = routeAlternatives[selectedRouteIdx].distance;
+                  HUDDuration = routeAlternatives[selectedRouteIdx].weighted_duration;
+                }
               } else if (userLocation && routingEnd) {
                 HUDDistance = getClientDistance(userLocation.lat, userLocation.lng, routingEnd.lat, routingEnd.lng);
                 const estimatedRouteDistance = HUDDistance * 1.3;
@@ -2492,7 +2570,13 @@ export default function LiveMap({ activeMissions = [], height = 480, hideWrapper
           {/* Route polylines */}
           {isRoutingMode && routeAlternatives && routeAlternatives.map((route, idx) => {
             const isSel = selectedRouteIdx === idx;
-            const polyCoords = route.geometry.coordinates.map(c => [c[1], c[0]]);
+            let polyCoords = route.geometry.coordinates.map(c => [c[1], c[0]]);
+            if (isNavigatingActive && isSel && userLocation) {
+              const details = getRemainingRouteDetails(userLocation, route);
+              if (details && details.coordinates) {
+                polyCoords = details.coordinates.map(c => [c[1], c[0]]);
+              }
+            }
             const color = isSel 
               ? (route.is_flooded ? '#ef4444' : '#06b6d4') 
               : '#64748b';

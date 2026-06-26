@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { broadcastAdvisories } from '../../data/mockData';
 import { apiService } from '../../services/apiService';
-import { WS_URL } from '../../../config/apiConfig';
+import { WS_URL } from '../../config/apiConfig';
 
 // ── Mock Data ────────────────────────────────────────────────────────────────
 

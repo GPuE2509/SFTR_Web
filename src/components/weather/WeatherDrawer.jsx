@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL } from '../../config/apiConfig';
 import { Cloud, Wind, Droplets, Thermometer, MapPin, X } from 'lucide-react';
 import WeatherEffects from './WeatherEffects';
 
@@ -34,8 +35,8 @@ export default function WeatherDrawer({ isOpen, onClose }) {
       }
 
       const [curRes, fcRes] = await Promise.all([
-        fetch(`http://localhost:5000/api/weather/current${queryStr}`).then(r => r.json()),
-        fetch(`http://localhost:5000/api/weather/forecast${queryStr}`).then(r => r.json())
+        fetch(`${API_URL}/weather/current${queryStr}`).then(r => r.json()),
+        fetch(`${API_URL}/weather/forecast${queryStr}`).then(r => r.json())
       ]);
 
       if (curRes.success) setCurrentWeather(curRes.data);

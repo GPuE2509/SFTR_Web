@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL } from '../../../config/apiConfig';
 import {
   LayoutDashboard, FileText, Settings, Users,
   MessageSquare, HeadphonesIcon, ChevronLeft, ChevronRight,
@@ -44,7 +45,7 @@ export default function ManagerSidebar({ activePage, onNavigate, collapsed, onTo
   const [pendingReports, setPendingReports] = useState(0);
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/incident-reports')
+    fetch(`${API_URL}/incident-reports`)
       .then(res => res.json())
       .then(data => {
         if (data.success) {

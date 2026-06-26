@@ -4,6 +4,7 @@ import UserSidebar from './components/layout/user/UserSidebar';
 import UserTopBar from './components/layout/user/UserTopBar';
 import AnimatedBackground from './components/background/AnimatedBackground';
 import { apiService } from './services/apiService';
+import { WS_URL } from './config/apiConfig';
 import { MessageSquare } from 'lucide-react';
 
 const UserDashboard = lazy(() => import('./pages/user/UserDashboard'));
@@ -154,7 +155,7 @@ export default function UserApp({
     let retryTimer;
 
     const connect = () => {
-      const wsUrl = `ws://localhost:5000`;
+      const wsUrl = WS_URL;
       socket = new WebSocket(wsUrl);
 
       socket.onopen = () => {

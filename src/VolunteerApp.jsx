@@ -4,6 +4,7 @@ import VolunteerSidebar from './components/layout/volunteer/VolunteerSidebar';
 import VolunteerTopBar from './components/layout/volunteer/VolunteerTopBar';
 import AnimatedBackground from './components/background/AnimatedBackground';
 import { apiService } from './services/apiService';
+import { WS_URL } from './config/apiConfig';
 import { MessageSquare } from 'lucide-react';
 
 import { useAuth } from './hooks/useAuth';
@@ -106,7 +107,7 @@ export default function VolunteerApp({ onLogoutToGuest }) {
     let retryTimer;
 
     const connect = () => {
-      const wsUrl = `ws://localhost:5000`;
+      const wsUrl = WS_URL;
       socket = new WebSocket(wsUrl);
 
       socket.onopen = () => {

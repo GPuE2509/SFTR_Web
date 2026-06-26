@@ -4,6 +4,7 @@ import { CloudRain, Search, Wrench, Star, Phone, Clock, ChevronDown, ChevronUp, 
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { apiService } from '../../services/apiService';
+import { API_URL, WS_URL } from '../../config/apiConfig';
 
 // ── Star Rating Component ─────────────────────────────────────────────────────
 function StarRating({ value, onChange, size = 14, readonly = false }) {
@@ -613,8 +614,7 @@ export default function LiveMap({ activeMissions = [], height = 480, hideWrapper
     // Set up WebSocket for real-time telemetry
     let ws = null;
     const connectWebSocket = () => {
-      const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-      const wsUrl = backendUrl.replace('http', 'ws').replace('/api', '');
+      const wsUrl = WS_URL;
       
       ws = new WebSocket(wsUrl);
       

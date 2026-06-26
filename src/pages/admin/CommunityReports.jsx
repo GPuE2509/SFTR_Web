@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_URL } from '../../config/apiConfig';
 import {
   Search, Filter, CheckCircle, XCircle, Eye, Megaphone,
   Bot, AlertTriangle, Clock, ChevronRight, Send, X,
@@ -221,7 +222,7 @@ export default function CommunityReports() {
 
   const fetchReports = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/incident-reports');
+      const res = await fetch(`${API_URL}/incident-reports`);
       const data = await res.json();
       if (data.success) {
         const mappedData = data.data.map(r => ({ ...r, status: r.moderation_status ? r.moderation_status.toLowerCase() : 'pending' }));
@@ -267,7 +268,7 @@ export default function CommunityReports() {
       return;
     }
     try {
-      const res = await fetch(`http://localhost:5000/api/incident-reports/${id}/status`, {
+      const res = await fetch(`${API_URL}/incident-reports/${id}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: action }),

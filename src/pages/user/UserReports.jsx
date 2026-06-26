@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { API_URL } from '../../config/apiConfig';
 import {
   Camera, MapPin, Upload, CheckCircle, XCircle,
   Search, Bot, ThumbsUp, ThumbsDown, FileText,
@@ -66,7 +67,7 @@ export default function UserReports() {
 
   const fetchReports = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/incident-reports');
+      const res = await fetch(`${API_URL}/incident-reports`);
       const data = await res.json();
       if (data.success) {
         setReports(data.data);
@@ -198,7 +199,7 @@ export default function UserReports() {
         is_approved_by_ai: aiScore >= 50
       };
 
-      const res = await fetch('http://localhost:5000/api/incident-reports', {
+      const res = await fetch(`${API_URL}/incident-reports`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -256,7 +257,7 @@ export default function UserReports() {
     const newVoteType = prevVote === type ? null : type;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/incident-reports/${reportId}/vote`, {
+      const res = await fetch(`${API_URL}/incident-reports/${reportId}/vote`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ vote_type: newVoteType, previous_vote: prevVote, user_id: userId })

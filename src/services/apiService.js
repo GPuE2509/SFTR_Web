@@ -4,7 +4,9 @@
  * Easily switch BASE_URL to connect to your real Backend Server.
  */
 
-const BASE_URL = 'https://sftr-backend.onrender.com/api'; // Change to actual backend URL when ready
+import { API_URL } from '../config/apiConfig';
+
+const BASE_URL = API_URL;
 
 let isRefreshing = false;
 let refreshQueue = [];

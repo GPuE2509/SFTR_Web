@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL } from '../../../config/apiConfig';
 import {
   LayoutDashboard, FileText, ShieldAlert, Bell,
   MessageSquare, Trophy, ChevronLeft, ChevronRight,
@@ -21,7 +22,7 @@ export default function UserSidebar({ activePage, onNavigate, collapsed, onToggl
     const checkNew = async () => {
       const lastSeen = localStorage.getItem('lastVisitedCommunityVerification');
       try {
-        const res = await fetch(`http://localhost:5000/api/incident-reports/new-count${lastSeen ? `?since=${lastSeen}` : ''}`);
+        const res = await fetch(`${API_URL}/incident-reports/new-count${lastSeen ? `?since=${lastSeen}` : ''}`);
         const data = await res.json();
         if (data.success) setNewReportsCount(data.count);
       } catch (err) {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { API_URL } from '../../config/apiConfig';
 import { CloudLightning, Search, Thermometer, Droplets, Wind, Cloud, ChevronDown } from 'lucide-react';
 import WeatherEffects from './WeatherEffects';
 
@@ -66,8 +67,8 @@ export default function WeatherBanner() {
       let queryStr = cityQuery ? `?q=${cityQuery}` : `?lat=${lat}&lon=${lon}`;
 
       const [curRes, fcRes] = await Promise.all([
-        fetch(`http://localhost:5000/api/weather/current${queryStr}`).then(r => r.json()),
-        fetch(`http://localhost:5000/api/weather/forecast${queryStr}`).then(r => r.json())
+        fetch(`${API_URL}/weather/current${queryStr}`).then(r => r.json()),
+        fetch(`${API_URL}/weather/forecast${queryStr}`).then(r => r.json())
       ]);
 
       if (curRes.success) {

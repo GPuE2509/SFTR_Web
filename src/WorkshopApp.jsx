@@ -4,6 +4,7 @@ import WorkshopSidebar from './components/layout/workshop/WorkshopSidebar';
 import WorkshopTopBar from './components/layout/workshop/WorkshopTopBar';
 import AnimatedBackground from './components/background/AnimatedBackground';
 import { apiService } from './services/apiService';
+import { WS_URL } from './config/apiConfig';
 import { MessageSquare } from 'lucide-react';
 
 // ── Workshop-specific pages ──
@@ -156,7 +157,7 @@ export default function WorkshopApp({
     let retryTimer;
 
     const connect = () => {
-      const wsUrl = `ws://localhost:5000`;
+      const wsUrl = WS_URL;
       socket = new WebSocket(wsUrl);
 
       socket.onopen = () => {

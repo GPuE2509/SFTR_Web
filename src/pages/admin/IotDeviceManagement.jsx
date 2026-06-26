@@ -3,6 +3,7 @@ import {
   Search, Cpu, Battery, AlertTriangle, X, PowerOff, Edit, Upload, Power
 } from 'lucide-react';
 import { apiService } from '../../services/apiService';
+import { API_URL, WS_URL } from '../../config/apiConfig';
 
 function ConfirmModal({ title, message, onConfirm, onCancel, variant = 'danger' }) {
   return (
@@ -435,8 +436,7 @@ export default function IotDeviceManagement() {
 
     let ws = null;
     const connectWebSocket = () => {
-      const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-      const wsUrl = backendUrl.replace('http', 'ws').replace('/api', '');
+      const wsUrl = WS_URL;
       ws = new WebSocket(wsUrl);
 
       ws.onmessage = (event) => {

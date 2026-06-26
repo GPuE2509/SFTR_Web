@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { broadcastAdvisories } from '../../data/mockData';
 import { apiService } from '../../services/apiService';
+import { WS_URL } from '../../../config/apiConfig';
 
 // ── Mock Data ────────────────────────────────────────────────────────────────
 
@@ -262,7 +263,7 @@ export default function UserNotifications() {
     if (!currentUser) return;
 
     // Use current location origin to determine WS port, default to localhost:5000
-    const wsUrl = `ws://localhost:5000`;
+    const wsUrl = WS_URL;
     const socket = new WebSocket(wsUrl);
     wsRef.current = socket;
 
